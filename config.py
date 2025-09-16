@@ -1,19 +1,16 @@
-# config.py
 import os
 
-# توكن البوت من Railway (Environment Variable)
-TELEGRAM_BOT_TOKEN = os.getenv("Token")  # خلي بالك من الحروف
+# توكن البوت (حطه على Railway باسم Token أو TOKEN)
+TELEGRAM_BOT_TOKEN = os.getenv("Token") or os.getenv("TOKEN")
 
-# Product Keys المسموح بيها
-valid_keys = ["a", "b"]
+# Product Keys (من ENV لو موجودة بصيغة ABC123,XYZ789 وإلا افتراضي)
+DEFAULT_VALID_KEYS = [k.strip() for k in os.getenv("VALID_KEYS", "ABC123,XYZ789").split(",") if k.strip()]
 
-# رسالة التذكير اليومية
+# رسالة التذكير اليومية (لو هتضيف Reminder بعدين)
 REMINDER_MESSAGE = "📚 متنساش تكمل مذاكرتك النهارده!"
 
-# Paths
-STUDENTS_FILE = "data/students.json"
-CONTENT_DIR = "foundation"
-TRAINING_DIR = "training"
+# ملفات بيانات
+STUDENTS_FILE = "data/students.json"   # قاعدة بيانات الطلبة (JSON)
 
-# إعدادات عامة
-TOTAL_LESSONS_COUNT = 50  # تستخدم لحساب النسبة؛ عدّل لو عايز
+# العدد الكلي للعناصر لحساب التقدم (عدّل حسب حجم المحتوى)
+TOTAL_LESSONS_COUNT = 50

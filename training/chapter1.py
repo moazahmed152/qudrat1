@@ -1,29 +1,17 @@
-TRAINING_CHAPTER = {
+CHAPTER = {
     "chapter_id": "chapter1",
     "chapter_name": "تدريب الباب الأول",
     "lessons": [
         {
             "lesson_id": "lesson1",
-            "lesson_name": "درس 1",
+            "lesson_name": "تدريب الدرس 1",
             "rules": [
                 {
                     "rule_id": "rule1",
-                    "rule_name": "قاعدة الجمع",
+                    "rule_name": "قاعدة الجمع - تدريب",
                     "questions": [
-                        {
-                            "qid": "q1",
-                            "text": "س1: 2 + 3 = ؟",
-                            "options": ["4", "5", "6", "3"],
-                            "answer_index": 1,
-                            "explain_video": "https://youtu.be/example1"
-                        },
-                        {
-                            "qid": "q2",
-                            "text": "س2: 7 + 2 = ؟",
-                            "options": ["8", "9", "10", "7"],
-                            "answer_index": 1,
-                            "explain_video": "https://youtu.be/example2"
-                        }
+                        {"question_id":"q1","question_text":"2 + 2 = ?", "options":["3","4","5","6"], "answer_index":1, "explanation_video":"https://bunny.example.net/tr_q1.mp4"},
+                        {"question_id":"q2","question_text":"3 + 5 = ?", "options":["7","8","9","10"], "answer_index":1, "explanation_video":"https://bunny.example.net/tr_q2.mp4"}
                     ]
                 }
             ]

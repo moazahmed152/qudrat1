@@ -1,59 +1,69 @@
-# handlers/homework_handler.py
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ContextTypes
-from exercises.foundation_exercises import get_homework_for_rule
+from utils.keyboards import t_question_keyboard
 from utils.database import save_progress
-import json
 
-async def start_homework(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # callback data will be like: homework:chapter1:lesson1:rule1
+async def handle_homework_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    _, chapter_id, lesson_id, rule_id = query.data.split(":")
-    hw = get_homework_for_rule(chapter_id, lesson_id, rule_id)
-    if not hw:
-        await query.edit_message_text("لا توجد أسئلة واجب لهذه القاعدة.")
-        return
-    # send first question
-    q = hw[0]
-    opts = [[InlineKeyboardButton(opt, callback_data=f"hwans:{q['question_id']}:{i}")] for i,opt in enumerate(q["options"])]
-    await query.edit_message_text(q["question_text"], reply_markup=InlineKeyboardMarkup(opts))
-    # store hw list in context
-    context.user_data["homework_list"] = hw
-    context.user_data["homework_index"] = 0
-    return
+    data = query.data
 
-async def handle_hw_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    data = query.data  # hwans:question_id:opt_index
-    _, qid, opt_idx = data.split(":")
-    opt_idx = int(opt_idx)
-    hw_list = context.user_data.get("homework_list", [])
-    idx = context.user_data.get("homework_index", 0)
-    if idx >= len(hw_list):
-        await query.edit_message_text("انتهى الواجب.")
-        return
-    q = hw_list[idx]
-    correct = q.get("answer_index")
-    user_id = query.from_user.id
-    if opt_idx == correct:
-        # mark this question done
-        save_progress(user_id, f"hw:{qid}", "correct")
-        # go to next question
-        context.user_data["homework_index"] = idx + 1
-        if context.user_data["homework_index"] < len(hw_list):
-            q_next = hw_list[context.user_data["homework_index"]]
-            opts = [[InlineKeyboardButton(opt, callback_data=f"hwans:{q_next['question_id']}:{i}")] for i,opt in enumerate(q_next["options"])]
-            await query.edit_message_text("✅ إجابة صحيحة! السؤال التالي:", reply_markup=InlineKeyboardMarkup(opts))
+    if data.startswith("homework:"):
+        _, chapter_id, lesson_id, rule_id = data.split(":")
+        module = __import__(f"foundation.{chapter_id}", fromlist=["CHAPTER"])
+        chapter = module.CHAPTER
+        lesson = next((l for l in chapter["lessons"] if l["lesson_id"] == lesson_id), None)
+        rule = next((r for r in lesson["rules"] if r["rule_id"] == rule_id), None)
+
+        questions = rule.get("homework", [])
+        if not questions:
+            await query.edit_message_text("لا يوجد واجب لهذه القاعدة حالياً.")
             return
+
+        context.user_data["h_questions"] = questions
+        context.user_data["h_index"] = 0
+        context.user_data["h_score"] = 0
+
+        q = questions[0]
+        await query.edit_message_text(f"📝 {q['q']}", reply_markup=t_question_keyboard(q["id"], q["options"]))
+        return
+
+    if data.startswith("hans:"):
+        _, qid, opt_idx = data.split(":")
+        opt_idx = int(opt_idx)
+        idx = context.user_data.get("h_index", 0)
+        qs = context.user_data.get("h_questions", [])
+        if idx >= len(qs):
+            await query.edit_message_text("انتهى الواجب.")
+            return
+        q = qs[idx]
+        correct = (opt_idx == q["answer"])
+
+        if correct:
+            context.user_data["h_score"] = context.user_data.get("h_score", 0) + 1
+            await query.edit_message_text("✅ إجابة صحيحة!")
         else:
-            # finished
-            await query.edit_message_text("🎉 انتهى الواجب! سيتم حساب النتيجة.")
-            # you can compute summary here
-            return
-    else:
-        # wrong -> show explanation video
-        await query.edit_message_text(f"❌ إجابة خاطئة. شاهد الشرح: {q.get('explanation_video')}")
-        # optionally allow retry or continue to next
+            await query.edit_message_text(f"❌ إجابة خاطئة.\n📺 الشرح: {q.get('explanation')}")
+
+        # التالي
+        idx += 1
+        context.user_data["h_index"] = idx
+
+        if idx < len(qs):
+            nq = qs[idx]
+            await query.message.reply_text(f"📝 {nq['q']}", reply_markup=t_question_keyboard(nq["id"], nq["options"]))
+        else:
+            score = context.user_data.get("h_score", 0)
+            total = len(qs)
+            pct = (score / total) * 100
+            save_progress(query.from_user.id, f"homework:last_result", f"{score}/{total}")
+
+            if pct >= 80:
+                level_msg = "🎉 ممتاز! مستواك عالي جدًا"
+            elif pct >= 50:
+                level_msg = "👍 جيد، محتاج مراجعة بسيطة"
+            else:
+                level_msg = "⚠️ محتاج تراجع القاعدة دي تاني"
+
+            await query.message.reply_text(f"📊 خلصت الواجب!\nنتيجتك: {score}/{total}\n{level_msg}")
         return

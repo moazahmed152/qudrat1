@@ -11,6 +11,32 @@ def main_menu_keyboard():
     return InlineKeyboardMarkup(buttons)
 
 
+# قائمة الأبواب في التأسيس
+def chapters_keyboard(chapters):
+    rows = []
+    for ch in chapters:
+        rows.append([
+            InlineKeyboardButton(
+                ch["chapter_name"],
+                callback_data=f"chapter:{ch['chapter_id']}"
+            )
+        ])
+    return InlineKeyboardMarkup(rows)
+
+
+# قائمة الأبواب في التدريب
+def t_chapters_keyboard(chapters):
+    rows = []
+    for ch in chapters:
+        rows.append([
+            InlineKeyboardButton(
+                f"📘 {ch['chapter_name']}",
+                callback_data=f"t_chapter:{ch['chapter_id']}"
+            )
+        ])
+    return InlineKeyboardMarkup(rows)
+
+
 # قائمة الدروس داخل الباب
 def lessons_keyboard(chapter_id, lessons):
     rows = []

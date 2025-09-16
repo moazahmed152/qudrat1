@@ -1,48 +1,79 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+# القائمة الرئيسية
 def main_menu_keyboard():
-    buttons = [
+    keyboard = [
         [InlineKeyboardButton("📘 تأسيس", callback_data="foundation")],
-        [InlineKeyboardButton("📝 تدريب", callback_data="training")],
+        [InlineKeyboardButton("📗 تدريب", callback_data="training")],
         [InlineKeyboardButton("📊 إحصائياتي", callback_data="stats")],
-        [InlineKeyboardButton("🔀 سؤال عشوائي", callback_data="random_question")],
+        [InlineKeyboardButton("🔀 سؤال عشوائي", callback_data="random_q")]
     ]
-    return InlineKeyboardMarkup(buttons)
+    return InlineKeyboardMarkup(keyboard)
 
-def lessons_keyboard(chapter_id, lessons):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(l["lesson_name"], callback_data=f"lesson:{chapter_id}:{l['lesson_id']}")]
-        for l in lessons
+
+# قائمة الأبواب
+def chapters_keyboard(chapters, mode="foundation"):
+    keyboard = []
+    for ch in chapters:
+        keyboard.append([
+            InlineKeyboardButton(f"📂 {ch['title']}", callback_data=f"{mode}:chapter:{ch['id']}")
+        ])
+    keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data="main_menu")])
+    return InlineKeyboardMarkup(keyboard)
+
+
+# قائمة الدروس
+def lessons_keyboard(lessons, chapter_id, mode="foundation"):
+    keyboard = []
+    for l in lessons:
+        keyboard.append([
+            InlineKeyboardButton(f"📖 {l['title']}", callback_data=f"{mode}:lesson:{chapter_id}:{l['id']}")
+        ])
+    keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data=f"{mode}:back")])
+    return InlineKeyboardMarkup(keyboard)
+
+
+# قائمة القواعد
+def rules_keyboard(rules, chapter_id, lesson_id, mode="foundation"):
+    keyboard = []
+    for r in rules:
+        keyboard.append([
+            InlineKeyboardButton(f"📑 {r['title']}", callback_data=f"{mode}:rule:{chapter_id}:{lesson_id}:{r['id']}")
+        ])
+    keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data=f"{mode}:lesson_back:{chapter_id}")])
+    return InlineKeyboardMarkup(keyboard)
+
+
+# قائمة محتوى القاعدة (شرح + أمثلة + واجب)
+def rule_content_keyboard(chapter_id, lesson_id, rule_id):
+    keyboard = [
+        [InlineKeyboardButton("🎥 شرح القاعدة", callback_data=f"rule_video:{chapter_id}:{lesson_id}:{rule_id}")],
+    ]
+    for i in range(1, 11):  # 10 أمثلة
+        keyboard.append([
+            InlineKeyboardButton(f"📝 مثال {i}", callback_data=f"example:{chapter_id}:{lesson_id}:{rule_id}:{i}")
+        ])
+    keyboard.append([
+        InlineKeyboardButton("📒 واجب", callback_data=f"homework:{chapter_id}:{lesson_id}:{rule_id}")
     ])
+    keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data=f"foundation:lesson_back:{chapter_id}")])
+    return InlineKeyboardMarkup(keyboard)
 
-def rules_keyboard(chapter_id, lesson_id, rules):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(r["rule_name"], callback_data=f"rule:{chapter_id}:{lesson_id}:{r['rule_id']}")]
-        for r in rules
-    ])
 
-def rule_content_keyboard(chapter_id, lesson_id, rule_id, num_examples=10, completed=None):
-    done = set(int(x) for x in (completed or []))
-    rows = [[InlineKeyboardButton("📹 شرح القاعدة", callback_data=f"explain:{chapter_id}:{lesson_id}:{rule_id}")]]
-    for i in range(1, num_examples + 1):
-        label = f"✅ مثال {i}" if i in done else f"مثال {i}"
-        rows.append([InlineKeyboardButton(label, callback_data=f"example:{chapter_id}:{lesson_id}:{rule_id}:{i}")])
-    rows.append([InlineKeyboardButton("📝 واجب", callback_data=f"homework:{chapter_id}:{lesson_id}:{rule_id}")])
-    return InlineKeyboardMarkup(rows)
-
-def example_feedback_keyboard(chapter_id, lesson_id, rule_id, idx):
-    return InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("✅ فهمت", callback_data=f"got:example:{chapter_id}:{lesson_id}:{rule_id}:{idx}"),
-            InlineKeyboardButton("🔄 إعادة", callback_data=f"redo:example:{chapter_id}:{lesson_id}:{rule_id}:{idx}")
-        ]
-    ])
-
+# أزرار سؤال التدريب أو الواجب
 def t_question_keyboard(qid, options):
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton(opt, callback_data=f"hans:{qid}:{i}")]
-        for i, opt in enumerate(options)
-    ])
+    keyboard = []
+    for idx, opt in enumerate(options):
+        keyboard.append([
+            InlineKeyboardButton(opt, callback_data=f"hans:{qid}:{idx}")
+        ])
+    return InlineKeyboardMarkup(keyboard)
 
-def main_menu_reply():
-    return InlineKeyboardMarkup([["🏠 القائمة الرئيسية"]], resize_keyboard=True)
+
+# أزرار بعد المثال (فهمت / محتاج إعادة)
+def example_feedback_keyboard(chapter_id, lesson_id, rule_id, example_idx):
+    keyboard = [
+        [InlineKeyboardButton("✅ فهمت", callback_data=f"example_done:{chapter_id}:{lesson_id}:{rule_id}:{example_idx}")],
+        [InlineKeyboardButton("🔄 محتاج إعادة", callback_data=f"example_retry:{chapter_id}:{lesson_id}:{rule_id}:{example_idx}")]
+    ]
+    return InlineKeyboardMarkup(keyboard)

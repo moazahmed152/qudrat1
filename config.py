@@ -1,18 +1,17 @@
 import os
 
-# توكن البوت من Railway (Environment Variable)
-TELEGRAM_BOT_TOKEN = os.getenv("Token")
+TELEGRAM_BOT_TOKEN = os.getenv("Token")  # Railway environment variable
 
 # Product Keys
 DEFAULT_VALID_KEYS = ["a", "XYZ789"]
 
-# رسالة التذكير
+# Messages
 REMINDER_MESSAGE = "📚 متنساش تكمل مذاكرتك النهارده!"
 
-# المسارات
+# Paths
 STUDENTS_FILE = "data/students.json"
 CONTENT_DIR = "foundation"
 TRAINING_DIR = "training"
 
-# عدد الدروس الكلي
+# Settings
 TOTAL_LESSONS_COUNT = 50

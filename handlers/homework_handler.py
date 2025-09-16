@@ -1,4 +1,3 @@
-# handlers/homework_handler.py
 from telegram import Update
 from telegram.ext import ContextTypes
 from utils.keyboards import t_question_keyboard
@@ -9,7 +8,6 @@ async def handle_homework_callback(update: Update, context: ContextTypes.DEFAULT
     await query.answer()
     data = query.data
 
-    # أول ما الطالب يضغط على "واجب"
     if data.startswith("homework:"):
         _, chapter_id, lesson_id, rule_id = data.split(":")
         module = __import__(f"foundation.{chapter_id}", fromlist=["CHAPTER"])
@@ -19,32 +17,25 @@ async def handle_homework_callback(update: Update, context: ContextTypes.DEFAULT
 
         questions = rule.get("homework", [])
         if not questions:
-            await query.edit_message_text("❌ لا يوجد واجب لهذه القاعدة حالياً.")
+            await query.edit_message_text("❌ لا يوجد واجب لهذه القاعدة.")
             return
 
-        # نجهز الداتا في user_data
         context.user_data["h_questions"] = questions
         context.user_data["h_index"] = 0
         context.user_data["h_score"] = 0
 
         q = questions[0]
-        await query.edit_message_text(
-            f"📝 {q['q']}",
-            reply_markup=t_question_keyboard(q["id"], q["options"])
-        )
+        await query.edit_message_text(f"📝 {q['q']}", reply_markup=t_question_keyboard(q["id"], q["options"]))
         return
 
-    # لما الطالب يجاوب سؤال
     if data.startswith("hans:"):
         _, qid, opt_idx = data.split(":")
         opt_idx = int(opt_idx)
         idx = context.user_data.get("h_index", 0)
         qs = context.user_data.get("h_questions", [])
-
         if idx >= len(qs):
-            await query.edit_message_text("✅ انتهى الواجب.")
+            await query.edit_message_text("✔️ انتهى الواجب.")
             return
-
         q = qs[idx]
         correct = (opt_idx == q["answer"])
 
@@ -54,22 +45,17 @@ async def handle_homework_callback(update: Update, context: ContextTypes.DEFAULT
         else:
             await query.edit_message_text(f"❌ إجابة خاطئة.\n📺 الشرح: {q.get('explanation')}")
 
-        # نروح للسؤال اللي بعده
         idx += 1
         context.user_data["h_index"] = idx
 
         if idx < len(qs):
             nq = qs[idx]
-            await query.message.reply_text(
-                f"📝 {nq['q']}",
-                reply_markup=t_question_keyboard(nq["id"], nq["options"])
-            )
+            await query.message.reply_text(f"📝 {nq['q']}", reply_markup=t_question_keyboard(nq["id"], nq["options"]))
         else:
-            # خلص الواجب
             score = context.user_data.get("h_score", 0)
             total = len(qs)
             pct = (score / total) * 100
-            save_progress(query.from_user.id, f"homework:last_result", f"{score}/{total}")
+            save_progress(query.from_user.id, "homework:last_result", f"{score}/{total}")
 
             if pct >= 80:
                 level_msg = "🎉 ممتاز! مستواك عالي جدًا"
@@ -78,7 +64,4 @@ async def handle_homework_callback(update: Update, context: ContextTypes.DEFAULT
             else:
                 level_msg = "⚠️ محتاج تراجع القاعدة دي تاني"
 
-            await query.message.reply_text(
-                f"📊 خلصت الواجب!\nنتيجتك: {score}/{total}\n{level_msg}"
-            )
-        return
+            await query.message.reply_text(f"📊 خلصت الواجب!\nنتيجتك: {score}/{total}\n{level_msg}")

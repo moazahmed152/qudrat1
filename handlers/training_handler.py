@@ -1,86 +1,55 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-from utils.keyboards import t_question_keyboard, main_menu_reply
+from utils.keyboards import t_question_keyboard
 from utils.database import save_progress
-import random
 
-
-async def handle_training_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
+    user_id = query.from_user.id
 
-    # بدء التدريب
-    if data.startswith("training:"):
-        _, chapter_id, lesson_id, rule_id = data.split(":")
-        module = __import__(f"training.{chapter_id}", fromlist=["CHAPTER"])
-        chapter = module.CHAPTER
-        lesson = next((l for l in chapter["lessons"] if l["lesson_id"] == lesson_id), None)
-        rule = next((r for r in lesson["rules"] if r["rule_id"] == rule_id), None)
-
-        questions = rule.get("training_questions", [])
-        if not questions:
-            await query.edit_message_text("❌ لا يوجد تدريب لهذه القاعدة حالياً.")
-            return
-
-        context.user_data["t_questions"] = questions
-        context.user_data["t_index"] = 0
-        context.user_data["t_score"] = 0
-
-        q = questions[0]
-        await query.edit_message_text(
-            f"📝 {q['q']}",
-            reply_markup=t_question_keyboard(q["id"], q["options"])
-        )
+    if data == "training":
+        await query.edit_message_text("📝 التدريب لسه تحت الإنشاء (هنضيف أسئلة هنا).")
         return
 
-    # استلام إجابة
-    if data.startswith("hans:"):
+    if data.startswith("tq:"):
         _, qid, opt_idx = data.split(":")
         opt_idx = int(opt_idx)
 
-        idx = context.user_data.get("t_index", 0)
         qs = context.user_data.get("t_questions", [])
+        idx = context.user_data.get("t_index", 0)
 
         if idx >= len(qs):
+            await query.edit_message_text("✔️ خلصت التدريب.")
             return
 
         q = qs[idx]
         correct = (opt_idx == q["answer"])
 
         if correct:
-            context.user_data["t_score"] += 1
+            context.user_data["t_score"] = context.user_data.get("t_score", 0) + 1
             await query.edit_message_text("✅ إجابة صحيحة!")
         else:
-            await query.edit_message_text(
-                f"❌ إجابة خاطئة.\n📺 الشرح: {q.get('explanation', 'لا يوجد شرح')}"
-            )
+            await query.edit_message_text(f"❌ إجابة خاطئة.\n📺 الشرح: {q.get('explanation')}")
 
-        # التقدم للسؤال التالي
         idx += 1
         context.user_data["t_index"] = idx
 
         if idx < len(qs):
             nq = qs[idx]
-            await query.message.reply_text(
-                f"📝 {nq['q']}",
-                reply_markup=t_question_keyboard(nq["id"], nq["options"])
-            )
+            await query.message.reply_text(f"📝 {nq['q']}", reply_markup=t_question_keyboard(nq["id"], nq["options"]))
         else:
             score = context.user_data.get("t_score", 0)
             total = len(qs)
             pct = (score / total) * 100
-            save_progress(query.from_user.id, f"training:last_result", f"{score}/{total}")
+            save_progress(user_id, "training:last_result", f"{score}/{total}")
 
             if pct >= 80:
-                level_msg = "🎉 ممتاز! مستواك عالي جدًا"
+                level_msg = "🎉 ممتاز! متفوق جدًا"
             elif pct >= 50:
                 level_msg = "👍 جيد، محتاج مراجعة بسيطة"
             else:
-                level_msg = "⚠️ محتاج تراجع القاعدة دي تاني"
+                level_msg = "⚠️ محتاج تذاكر أكتر"
 
-            await query.message.reply_text(
-                f"📊 خلصت التدريب!\nنتيجتك: {score}/{total}\n{level_msg}",
-                reply_markup=main_menu_reply()
-            )
-        return
+            await query.message.reply_text(f"📊 خلصت التدريب!\nنتيجتك: {score}/{total}\n{level_msg}")

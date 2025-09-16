@@ -58,12 +58,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text("هل فهمت المثال؟", reply_markup=example_feedback_keyboard(chapter_id, lesson_id, rule_id, idx))
         return
 
-    if data.startswith("got:example:"):
+    elif data.startswith("got:example"):
         _, _, chapter_id, lesson_id, rule_id, idx = data.split(":")
-        key = f"{chapter_id}:{lesson_id}:{rule_id}:ex{idx}"
-        save_progress(query.from_user.id, key, "done")
-        await query.edit_message_text("✅ تم تسجيل فهمك للمثال.")
-        return
+       save_progress(query.from_user.id, f"example:{chapter_id}:{lesson_id}:{rule_id}:{idx}", "done")
+    
+       # رجّع الطالب لقائمة الأمثلة
+       from utils.keyboards import rule_content_keyboard
+       kb = rule_content_keyboard(chapter_id, lesson_id, rule_id, num_examples=10)
+       await query.message.reply_text("✅ تمام، خلصت المثال ده. اختار اللي بعده:", reply_markup=kb)
+
 
     if data.startswith("redo:example:"):
         await query.edit_message_text("🔄 تمام، أعد مشاهدة الفيديو من زر الشرح/المثال.")

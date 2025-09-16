@@ -15,8 +15,15 @@ def main_menu_keyboard():
 def chapters_keyboard(chapters, mode="foundation"):
     keyboard = []
     for ch in chapters:
+        if isinstance(ch, dict):
+            title = ch.get("title", str(ch))
+            cid = ch.get("id", str(ch))
+        else:
+            title = str(ch)
+            cid = str(ch)
+
         keyboard.append([
-            InlineKeyboardButton(f"📂 {ch['title']}", callback_data=f"{mode}:chapter:{ch['id']}")
+            InlineKeyboardButton(f"📂 {title}", callback_data=f"{mode}:chapter:{cid}")
         ])
     keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data="main_menu")])
     return InlineKeyboardMarkup(keyboard)
@@ -26,8 +33,15 @@ def chapters_keyboard(chapters, mode="foundation"):
 def lessons_keyboard(lessons, chapter_id, mode="foundation"):
     keyboard = []
     for l in lessons:
+        if isinstance(l, dict):
+            title = l.get("title", str(l))
+            lid = l.get("id", str(l))
+        else:
+            title = str(l)
+            lid = str(l)
+
         keyboard.append([
-            InlineKeyboardButton(f"📖 {l['title']}", callback_data=f"{mode}:lesson:{chapter_id}:{l['id']}")
+            InlineKeyboardButton(f"📖 {title}", callback_data=f"{mode}:lesson:{chapter_id}:{lid}")
         ])
     keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data=f"{mode}:back")])
     return InlineKeyboardMarkup(keyboard)
@@ -37,8 +51,15 @@ def lessons_keyboard(lessons, chapter_id, mode="foundation"):
 def rules_keyboard(rules, chapter_id, lesson_id, mode="foundation"):
     keyboard = []
     for r in rules:
+        if isinstance(r, dict):
+            title = r.get("title", str(r))
+            rid = r.get("id", str(r))
+        else:
+            title = str(r)
+            rid = str(r)
+
         keyboard.append([
-            InlineKeyboardButton(f"📑 {r['title']}", callback_data=f"{mode}:rule:{chapter_id}:{lesson_id}:{r['id']}")
+            InlineKeyboardButton(f"📑 {title}", callback_data=f"{mode}:rule:{chapter_id}:{lesson_id}:{rid}")
         ])
     keyboard.append([InlineKeyboardButton("⬅️ رجوع", callback_data=f"{mode}:lesson_back:{chapter_id}")])
     return InlineKeyboardMarkup(keyboard)
@@ -47,7 +68,7 @@ def rules_keyboard(rules, chapter_id, lesson_id, mode="foundation"):
 # قائمة محتوى القاعدة (شرح + أمثلة + واجب)
 def rule_content_keyboard(chapter_id, lesson_id, rule_id):
     keyboard = [
-        [InlineKeyboardButton("🎥 شرح القاعدة", callback_data=f"rule_video:{chapter_id}:{lesson_id}:{rule_id}")],
+        [InlineKeyboardButton("🎥 شرح القاعدة", callback_data=f"rule_video:{chapter_id}:{lesson_id}:{rule_id}")]
     ]
     for i in range(1, 11):  # 10 أمثلة
         keyboard.append([

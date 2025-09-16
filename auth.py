@@ -1,44 +1,55 @@
+# auth.py
 import json
-import os
-from config import STUDENTS_FILE, DEFAULT_VALID_KEYS
+from telegram import Update
+from telegram.ext import ContextTypes
+from config import DEFAULT_VALID_KEYS, STUDENTS_FILE
+from utils.database import load_students, save_students
+from utils.keyboards import main_menu_keyboard
 
 
-def _load_students():
-    """تحميل بيانات الطلبة من ملف JSON"""
-    if not os.path.exists(STUDENTS_FILE):
-        return {}
-    with open(STUDENTS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+# /start command
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    students = load_students()
+
+    # لو مسجل قبل كده
+    if str(user.id) in students:
+        await update.message.reply_text(
+            f"👋 أهلاً {user.first_name}!\nانت مسجل بالفعل.",
+            reply_markup=main_menu_keyboard()
+        )
+        return
+
+    # أول مرة يدخل
+    await update.message.reply_text("🔑 من فضلك أدخل الـ Product Key:")
+    context.user_data["awaiting_key"] = True
 
 
-def _save_students(data):
-    """حفظ بيانات الطلبة في ملف JSON"""
-    with open(STUDENTS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+# أي رسالة نصية
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.message.from_user
+    students = load_students()
+    text = update.message.text.strip()
 
+    # لو مستني المفتاح
+    if context.user_data.get("awaiting_key"):
+        if text in DEFAULT_VALID_KEYS:
+            # نسجل الطالب
+            students[str(user.id)] = {
+                "id": user.id,
+                "name": user.full_name,
+                "key": text,
+                "progress": {}
+            }
+            save_students(students)
 
-def check_user_key(user_id, key=None):
-    """
-    التحقق من الـ Product Key للطالب.
-    - لو الطالب مسجل قبل كده، يرجّع True.
-    - لو دخل مفتاح جديد صحيح، يتخزن له مرة واحدة ويرجّع True.
-    - لو دخل مفتاح غلط، يرجّع False.
-    """
-    data = _load_students()
-    uid = str(user_id)
+            context.user_data["awaiting_key"] = False
 
-    # لو الطالب عنده مفتاح مسجل قبل كده
-    if uid in data and data[uid].get("key"):
-        return True
-
-    # لو المستخدم دخل مفتاح جديد
-    if key:
-        if key in DEFAULT_VALID_KEYS:
-            data[uid] = {"key": key}
-            _save_students(data)
-            return True
+            await update.message.reply_text(
+                f"✅ تم تسجيل المفتاح بنجاح يا {user.first_name}!",
+                reply_markup=main_menu_keyboard()
+            )
         else:
-            return False
-
-    # لو مفيش حاجة
-    return False
+            await update.message.reply_text("❌ المفتاح غير صحيح. حاول تاني.")
+    else:
+        await update.message.reply_text("❓ استخدم /start للبدء.")

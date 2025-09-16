@@ -2,7 +2,7 @@
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-from config import TELEGRAM_BOT_TOKEN, valid_keys , REMINDER_MESSAGE
+from config import TELEGRAM_BOT_TOKEN, valid_keys, REMINDER_MESSAGE
 from utils.database import load_students, save_students, update_last_active
 from utils.keyboards import main_menu_reply
 import handlers.foundation_handler as fh
@@ -35,7 +35,7 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if context.user_data.get("awaiting_key"):
         key = update.message.text.strip()  # حذف المسافات
         key_upper = key.upper()
-        valid_keys_upper = [k.upper() for k in students.get("valid_keys", [])]
+        valid_keys_upper = [k.upper() for k in valid_keys]  # استخدم config.py
 
         if key_upper in valid_keys_upper:
             # تسجيل المستخدم
@@ -53,12 +53,9 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ المفتاح غير صحيح. جرب تاني:")
             return
 
-
     # handle main menu texts
     text = update.message.text
     if text == "📘 تأسيس":
-        # show chapters from foundation module files
-        # collect chapters by scanning folder
         import os, importlib
         chapters = []
         for fname in os.listdir("foundation"):
@@ -68,13 +65,11 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 ch = getattr(mod, "CHAPTER", None)
                 if ch:
                     chapters.append({"chapter_id": ch["chapter_id"], "chapter_name": ch["chapter_name"]})
-        # send inline keyboard via handlers' keyboard
         from utils.keyboards import chapters_keyboard
         await update.message.reply_text("اختر الباب:", reply_markup=chapters_keyboard(chapters))
         return
 
     if text == "📗 تدريب":
-        # show training chapters analogously
         import os, importlib
         chapters = []
         for fname in os.listdir("training"):
@@ -94,7 +89,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if text == "🔀 سؤال عشوائي":
-        # choose random example from content (simple approach: pick from foundation/chapter1)
         import random, importlib
         try:
             mod = importlib.import_module("foundation.chapter1")
@@ -117,6 +111,7 @@ def main():
     # Commands
     app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("stats", lambda u,c: c.application.create_task(start_cmd(u,c))))
+    
     # Callback handlers for foundation / examples / homework / training
     app.add_handler(CallbackQueryHandler(fh.handle_callback, pattern="^(chapter:|lesson:|rule:|explain:|example:|got:example:|redo:example:|homework:).+"))
     app.add_handler(CallbackQueryHandler(th.handle_training_callback, pattern="^(train:|tans:).+"))

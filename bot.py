@@ -111,6 +111,7 @@ def main():
     # Commands
     app.add_handler(CommandHandler("start", start_cmd))
     app.add_handler(CommandHandler("stats", lambda u,c: c.application.create_task(start_cmd(u,c))))
+    app.add_handler(CallbackQueryHandler(th.handle_training_callback, pattern="^(train:|train_chapter:|train_rule:|tans:).+"))
     
     # Callback handlers for foundation / examples / homework / training
     app.add_handler(CallbackQueryHandler(fh.handle_callback, pattern="^(chapter:|lesson:|rule:|explain:|example:|got:example:|redo:example:|homework:).+"))

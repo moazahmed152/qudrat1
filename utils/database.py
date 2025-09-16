@@ -27,11 +27,26 @@ def ensure_user(user_id: int):
     save_students(s)
 
 def save_progress(user_id: int, key: str, value="done"):
+    """حفظ تقدم المستخدم (مفتاح = value)."""
     s = load_students()
     sid = str(user_id)
     s["data"].setdefault(sid, {"progress": {}, "badges": [], "product_key": None})
-    s["data"][sid]["progress"][key] = value
+
+    if key.startswith("example:"):
+        # لو المفتاح مثال -> نحفظه في لستة
+        done = set(s["data"][sid]["progress"].get("completed_examples", []))
+        done.add(key)
+        s["data"][sid]["progress"]["completed_examples"] = list(done)
+    else:
+        s["data"][sid]["progress"][key] = value
+
     save_students(s)
 
 def get_progress(user_id: int):
+    """ترجع progress بتاع المستخدم."""
     return load_students()["data"].get(str(user_id), {}).get("progress", {})
+
+def load_progress(user_id: int):
+    """ترجع كل بيانات المستخدم (progress + badges + product_key)."""
+    s = load_students()
+    return s["data"].get(str(user_id), {})

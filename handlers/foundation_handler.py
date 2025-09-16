@@ -6,13 +6,32 @@ from utils.keyboards import (
     rule_content_keyboard,
     example_feedback_keyboard,
 )
-from utils.database import save_progress
+from utils.database import save_progress, get_progress
+
+
+def _completed_examples_for(user_id: int, chapter_id: str, lesson_id: str, rule_id: str):
+    """
+    ترجع set بأرقام الأمثلة اللى خلصها الطالب فى القاعدة دى.
+    احنا بنخزّن المفاتيح كده: "{chapter}:{lesson}:{rule}:example{idx}"
+    """
+    progress = get_progress(user_id) or {}
+    prefix = f"{chapter_id}:{lesson_id}:{rule_id}:example"
+    done = set()
+    for k, v in progress.items():
+        if k.startswith(prefix) and v:
+            try:
+                idx = int(k.replace(prefix, ""))  # آخر الرقم
+                done.add(idx)
+            except Exception:
+                continue
+    return done
 
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
+    user_id = query.from_user.id
 
     # اختيار باب (Chapter)
     if data.startswith("chapter:"):
@@ -41,7 +60,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # اختيار قاعدة (Rule)
+    # اختيار قاعدة (Rule) → نعرض الملخّص + قائمة الأمثلة مع ✅ للمكتمل
     if data.startswith("rule:"):
         _, chapter_id, lesson_id, rule_id = data.split(":")
         module = __import__(f"foundation.{chapter_id}", fromlist=["CHAPTER"])
@@ -55,10 +74,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text("❌ القاعدة غير موجودة.")
             return
 
-        text = f"🔸 {rule.get('rule_name', '')}\n\n{rule.get('summary', '')}\n\nاختر: شرح أو أمثلة أو واجب."
+        summary = rule.get("summary", "")
+        examples = rule.get("examples_videos", [])
+        num_examples = len(examples) if examples else 10
+
+        done = _completed_examples_for(user_id, chapter_id, lesson_id, rule_id)
+
+        text = f"🔸 {rule.get('rule_name', '')}\n\n{summary}\n\nاختر: شرح أو أمثلة أو واجب."
         await query.edit_message_text(
             text,
-            reply_markup=rule_content_keyboard(chapter_id, lesson_id, rule_id),
+            reply_markup=rule_content_keyboard(chapter_id, lesson_id, rule_id, num_examples=num_examples, completed=done),
         )
         return
 
@@ -112,20 +137,33 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # الطالب اختار "✅ فهمت" → نسجل التقدم ونرجّعه لقائمة الأمثلة/القاعدة
+    # "✅ فهمت" → نسجّل التقدّم ونرجّع نفس القائمة مع ✅ محدثة
     if data.startswith("got:example:"):
         _, _, chapter_id, lesson_id, rule_id, idx = data.split(":")
-        key = f"{chapter_id}:{lesson_id}:{rule_id}:example{idx}"
-        save_progress(query.from_user.id, key, "done")
+        idx_int = int(idx)
 
-        # ارجاع نفس قائمة القاعدة (شرح + أمثلة + واجب)
+        # خزّن التقدّم بصيغة: chapter:lesson:rule:example{idx}
+        key = f"{chapter_id}:{lesson_id}:{rule_id}:example{idx_int}"
+        save_progress(user_id, key, "done")
+
+        # احسب الأمثلة المكتملة بعد التحديث
+        module = __import__(f"foundation.{chapter_id}", fromlist=["CHAPTER"])
+        chapter = getattr(module, "CHAPTER", {})
+        lesson = next((l for l in chapter.get("lessons", []) if l["lesson_id"] == lesson_id), None)
+        rule = next((r for r in lesson.get("rules", []) if r["rule_id"] == rule_id), None)
+        examples = rule.get("examples_videos", [])
+        num_examples = len(examples) if examples else 10
+
+        done = _completed_examples_for(user_id, chapter_id, lesson_id, rule_id)
+
+        # ارجع القائمة بعلامات ✅ محدثة
         await query.message.reply_text(
-            "✅ تمام، خلصت المثال ده. اختار اللي بعده:",
-            reply_markup=rule_content_keyboard(chapter_id, lesson_id, rule_id, num_examples=10),
+            "✅ تمام، تم تسجيل فهمك. اختَر المثال اللى بعده:",
+            reply_markup=rule_content_keyboard(chapter_id, lesson_id, rule_id, num_examples=num_examples, completed=done),
         )
         return
 
-    # الطالب اختار "🔄 إعادة" → نعيد إرسال فيديو الشرح
+    # "🔄 إعادة"
     if data.startswith("redo:example:"):
         _, _, chapter_id, lesson_id, rule_id, idx = data.split(":")
         module = __import__(f"foundation.{chapter_id}", fromlist=["CHAPTER"])

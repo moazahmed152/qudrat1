@@ -34,3 +34,14 @@ def save_progress(user_id: int, key: str, value: str):
 
     students[user_id]["progress"][key] = value
     save_students(students)
+
+
+def get_progress(user_id: int, key: str):
+    """قراءة تقدم الطالب (progress)"""
+    students = load_students()
+    user_id = str(user_id)
+
+    if user_id not in students:
+        return None
+
+    return students[user_id].get("progress", {}).get(key)

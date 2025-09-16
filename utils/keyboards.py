@@ -45,4 +45,4 @@ def t_question_keyboard(qid, options):
     ])
 
 def main_menu_reply():
-    return ReplyKeyboardMarkup([["🏠 القائمة الرئيسية"]], resize_keyboard=True)
+    return InlineKeyboardMarkup([["🏠 القائمة الرئيسية"]], resize_keyboard=True)

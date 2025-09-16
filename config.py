@@ -1,19 +1,14 @@
-
 # config.py
 import os
 
 # توكن البوت من Railway (Environment Variable)
-TELEGRAM_BOT_TOKEN = os.getenv("TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("Token")  # خلي بالك من الحروف
 
 # Product Keys المسموح بيها
 DEFAULT_VALID_KEYS = ["ABC123", "XYZ789"]
 
 # رسالة التذكير اليومية
 REMINDER_MESSAGE = "📚 متنساش تكمل مذاكرتك النهارده!"
-
-
-
-
 
 # Paths
 STUDENTS_FILE = "data/students.json"

@@ -1,7 +1,7 @@
 import os
 
 # توكن البوت من Railway (Environment Variable)
-TELEGRAM_BOT_TOKEN = os.getenv("TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("Token")
 
 # Product Keys
 DEFAULT_VALID_KEYS = ["a", "XYZ789"]

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+
+# Config / sensitive files
+config.py
+*.env
+
+# Data / logs
+data/students.json
+*.log
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

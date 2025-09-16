@@ -31,22 +31,28 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sid = str(user.id)
     students = load_students()
 
-    # if awaiting key
+    # لو المستخدم منتظر إدخال المفتاح
     if context.user_data.get("awaiting_key"):
-        key = update.message.text.strip()
-        if key in students.get("valid_keys", []):
-            # register user
+        key = update.message.text.strip()  # حذف المسافات
+        key_upper = key.upper()
+        valid_keys_upper = [k.upper() for k in students.get("valid_keys", [])]
+
+        if key_upper in valid_keys_upper:
+            # تسجيل المستخدم
             students["data"].setdefault(sid, {})
             students["data"][sid]["product_key"] = key
             students["data"][sid].setdefault("progress", {})
             students["data"][sid].setdefault("badges", [])
             save_students(students)
             context.user_data["awaiting_key"] = False
-            await update.message.reply_text("✅ تم الربط! اهلاً بك 🎉", reply_markup=main_menu_reply())
+            await update.message.reply_text(
+                "✅ تم الربط! اهلاً بك 🎉", reply_markup=main_menu_reply()
+            )
             return
         else:
             await update.message.reply_text("❌ المفتاح غير صحيح. جرب تاني:")
             return
+
 
     # handle main menu texts
     text = update.message.text

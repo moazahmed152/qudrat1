@@ -1,4 +1,4 @@
 {
   "data": {},
-  "valid_keys": ["KEY123", "KEY456", "KEY789"]
+  "valid_keys": ["a", "KEY456", "KEY789"]
 }

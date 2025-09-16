@@ -2,7 +2,7 @@
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
-from config import TELEGRAM_BOT_TOKEN, DEFAULT_VALID_KEYS, REMINDER_MESSAGE
+from config import TELEGRAM_BOT_TOKEN, valid_keys , REMINDER_MESSAGE
 from utils.database import load_students, save_students, update_last_active
 from utils.keyboards import main_menu_reply
 import handlers.foundation_handler as fh

@@ -4,7 +4,7 @@ import os
 TELEGRAM_BOT_TOKEN = os.getenv("Token") or os.getenv("TOKEN")
 
 # Product Keys (من ENV لو موجودة بصيغة ABC123,XYZ789 وإلا افتراضي)
-DEFAULT_VALID_KEYS = [k.strip() for k in os.getenv("VALID_KEYS", "ABC123,XYZ789").split(",") if k.strip()]
+DEFAULT_VALID_KEYS = [k.strip() for k in os.getenv("VALID_KEYS", "a,XYZ789").split(",") if k.strip()]
 
 # رسالة التذكير اليومية (لو هتضيف Reminder بعدين)
 REMINDER_MESSAGE = "📚 متنساش تكمل مذاكرتك النهارده!"

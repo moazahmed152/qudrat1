@@ -2,15 +2,18 @@
 # config.py
 import os
 
-TOKEN = os.getenv("Token")  # لازم تضيف BOT_TOKEN في Railway Variables
-BUNNY_API_KEY = os.getenv("BUNNY_API_KEY")
+# توكن البوت من Railway (Environment Variable)
+TELEGRAM_BOT_TOKEN = os.getenv("TOKEN")
 
-
-# مفاتيح جاهزة للتجربة - استخدم ملف data/students.json.valid_keys لاحقًا أو DB
-DEFAULT_VALID_KEYS = ["KEY123", "KEY456", "KEY789"]
+# Product Keys المسموح بيها
+DEFAULT_VALID_KEYS = ["ABC123", "XYZ789"]
 
 # رسالة التذكير اليومية
-REMINDER_MESSAGE = "👋 افتكر تكمل دروسك النهاردة! يلا نذاكر 💪"
+REMINDER_MESSAGE = "📚 متنساش تكمل مذاكرتك النهارده!"
+
+
+
+
 
 # Paths
 STUDENTS_FILE = "data/students.json"
